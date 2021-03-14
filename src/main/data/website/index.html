@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Dashboard</title>
+    <link href="styles/normalize.css" rel="stylesheet">
+    <link href="styles/skeleton.css" rel="stylesheet">
+    <link href="styles/all.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script defer src="scripts/index.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1>Estação Ambiental</h1>
+        <div class="menu">
+            <div class="hamburger"></div>
+        </div>
+    </header>
+    <nav id="nav">
+        <ul>
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="config.html">Configurações</a></li>
+            <li><a href="creditos.html">Créditos</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div class="query">
+            <div class="filter_clicker">
+                <h4>Filtros</h4>
+                <div class="seta-baixo"></div>
+                <div class="seta-cima"></div>
+            </div>
+            <form id="filters">
+                <ul>
+                    <li>
+                        <label for="date_from">De:</label>
+                        <input type="date" id="date_from" name="date_from" placeholder="Exemplo: 01-01-2020" />
+                        <label for="date_to">Até:</label>
+                        <input type="date" id="date_to" name="date_to" placeholder="Exemplo: 01-01-2020" />
+
+                    </li>
+                    <li>
+                        <label for="sample">Dados:</label>
+                        <input type="text" id="sample" name="sample" placeholder="Exemplo: 10 ; 20 || dados" />
+                    </li>
+                    <li>
+                        <label for="cresc">Crescente:</label>
+                        <input type="radio" id="cresc" name="cresc" />
+                        <label for="desc">Decrescente:</label>
+                        <input type="radio" id="desc" name="cresc" checked />
+                    </li>
+                    <li>
+                        <button id="search">Buscar</button>
+                    </li>
+                </ul>
+            </form>
+        </div>
+        <div class="table">
+        </div>
+    </main>
+    <footer>
+        <p>Sistema projetado por alunos do curso de Engenharia de Controle e Automação da instituição CEFET-RJ</p>
+        <p>Desenvolvido para Projeto de Controle Ambiental de Museu</p>
+        <p>ESTA PÁGINA NÃO POSSUI FINS LUCRATIVOS</p>
+    </footer>
+</body>
+
+</html>

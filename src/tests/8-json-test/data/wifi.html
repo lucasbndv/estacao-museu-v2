@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>Your first HTML form, styled</title>
+		<style>
+      
+      * {
+        box-sizing: border-box;
+      }
+      
+			form, 
+      div.center {
+				margin: 1em auto;
+        width: 400px;
+				max-width: 90%;
+				padding: 1em;
+				border: 1px solid #ccc;
+				border-radius: 1em;
+			}
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 auto;
+        margin-bottom: 1em;
+      }
+      
+      table th {
+        text-align: left;
+      }
+      
+      tbody tr:nth-child(odd) {
+        background-color: rgba(0, 0, 255, .1);
+      }
+      
+      tbody {
+        border-top: 2px solid rgba(0, 0, 255, .2);
+        border-bottom: 2px solid rgba(0, 0, 255, .2);
+      }
+      
+      td,
+      th {
+        padding: .5em 1em;  
+      }
+      
+			ul {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+			}
+
+			form li + li {
+				margin-top: 1em;
+			}
+
+			label {
+				display: inline-block;
+				width: 6em;
+				text-align: right;
+			}
+
+			input,
+			textarea {
+        width: 60%;
+				font: 1em sans-serif;
+				border: 1px solid #999;
+        border-radius: 5px;
+			}
+      
+      @media screen and (max-width: 400px) {
+        input,
+        textarea {
+          display: block;
+          width: 100%;
+        }
+        
+        label {
+          text-align: left;
+          width: 100%;
+          
+        }
+      }
+      
+			input:focus,
+			textarea:focus {
+				border-color: #000;
+			}
+
+			textarea {
+				vertical-align: top;
+				height: 5em;
+			}
+
+      .flex {
+         display: flex;
+         justify-content: center;
+         align-item: center; 
+      }
+      
+			button {
+				margin: 0 auto;
+        padding: .5em 1em;
+			}
+      
+		</style>
+	</head>
+
+	<body>
+    <div class="center">
+      <table>
+        <colgroup></colgroup>
+        <thead>
+          <th scope="col">SSID</th>
+          <th scope="col">Signal</th>
+        </thead>
+        <tbody id="table-body">
+        </tbody>
+      </table>
+      <div class="flex">
+        <button id="btn-ap-scan">Scan APs</button>
+      </div>
+    </div>
+		<form id="form-elem" action="/post" method="post">
+			<ul>
+				<li>
+					<label for="ap-name">Access Point:</label>
+					<input type="text" id="ap-name" name="ap-name" />
+				</li>
+				<li>
+        <li>
+					<label for="ap-pass">Password:</label>
+					<input type="password" id="ap-pass" name="ap-pass" />
+				</li>
+				<li class="flex">
+					<button type="submit">Connect</button>
+				</li>
+			</ul>
+		</form>
+    
+    <script>
+      const button_scan = document.getElementById("btn-ap-scan");
+      button_scan.onclick = scanAPs;
+      
+      async function scanAPs(e) {
+        console.log("scan clicked");
+        button_scan.setAttribute("disabled", "disabled");
+        button_scan.innerHTML = "Scanning APs...";
+        
+        let res = await fetch("/api/ap-scan", {
+                        method: "GET", 
+                        headers: {
+                          "Content-Type": "application/json",
+                        }});
+        
+        let text = await res.text();
+        //console.log(text);
+        
+        data = JSON.parse(text);
+        console.log(data);
+        
+        let tbody = document.getElementById("table-body");
+        
+        data.forEach(d => {
+          let tr = document.createElement("tr");
+          let ssid = document.createElement("td");
+          ssid.innerHTML = String(d.SSID);
+          
+          let signal = document.createElement("td");
+          signal.innerHTML = String(d.RSSI);
+          
+          tr.appendChild(ssid);
+          tr.appendChild(signal);
+           
+          tbody.appendChild(tr); 
+        });
+        
+        button_scan.innerHTML = "Scan APs";
+        button_scan.removeAttribute("disabled");
+      };
+      document.addEventListener("DOMContentLoaded", scanAPs);
+      
+      const form_elem = document.getElementById("form-elem");
+      form_elem.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        let data = {
+          "ap-name": form_elem.querySelector("input[name='ap-name']").value,
+          "ap-pass": form_elem.querySelector("input[name='ap-pass']").value,
+        }
+        
+        console.log(JSON.stringify(data));
+        
+        let res = await fetch("/api/config", {
+                              method: "POST", 
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify(data)
+                              });
+                              
+        let text = await res.text();
+        console.log("Response: " + text);
+      };
+    </script>
+	</body>
+</html>

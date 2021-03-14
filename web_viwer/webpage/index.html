@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="styles/all.css" />
+    <link href="./plugins/fontawesome/css/all.css" rel="stylesheet" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./scripts/main.js"></script>
+
+    <title>Monitoramento Ambiental</title>
+  </head>
+  <body>
+    <header><h1>Estação Ambiental</h1></header>
+    <main>
+      <div class="card_container">
+        <!-- Card Temperature -->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-temperature-high fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Temperatura</h3>
+            <p id="temp">0°</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Humidity -->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-tint fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Humidade</h3>
+            <p id="humi">0%</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Pressure-->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-tachometer-alt fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Pressão</h3>
+            <p id="pressure">0 atm</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Luminosity-->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-bolt fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Luminosidade</h3>
+            <p id="luminosity">0</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Dust-->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-smog fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Poeira 1.0</h3>
+            <p id="dust1">0</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Dust2 -->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-smog fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Poeira 2.0</h3>
+            <p id="dust2">0</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Dust3 -->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-smog fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Poeira 3.0</h3>
+            <p id="dust3">0</p>
+          </div>
+        </div>
+        <!-- Card -->
+
+        <!-- Card Last Times -->
+        <div class="card">
+          <div class="card_icon">
+            <i class="fas fa-clock fa-2x"></i>
+          </div>
+          <div class="card_texts">
+            <h3>Ultima atualização</h3>
+            <p id="last_up">0</p>
+          </div>
+        </div>
+        <!-- Card -->
+      </div>
+
+      <div class="chart"></div>
+    </main>
+  </body>
+</html>
