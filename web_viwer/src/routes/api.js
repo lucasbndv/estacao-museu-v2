@@ -12,7 +12,24 @@ client.connect();
 const router = express.Router();
 
 router.get("/api", async (req, res) => {
-  client.connect();
+  //  date_to , date_from
+  //  GET /something?date_to=DATE&date_from=DATE&scale=compare/days/months/years
+  let date_to = req.query.date_to;
+  let date_from = req.query.date_from;
+  let scale = req.query.scale;
+
+  if (!date_to || !date_from || !scale){
+    try{
+      const resp = await client.query("SELECT * FROM estacao ORDER BY datetime DESC LIMIT 1");
+      res.send(resp.rows[0]);
+      return;
+    }catch(err){
+      console.log("Error: ", err.stacks);
+      res.send("Error on getting data");
+      return;
+    }
+  }
+
   try {
     const resp = await client.query("SELECT * FROM estacao");
     console.log(resp);
@@ -44,7 +61,6 @@ router.post("/api", async (req, res) => {
   }
 
   let db_querry_values = Object.values(data);
-  let db_querry_keys = Object.keys(data);
   //db_querry.push(date.toISOString().slice(0, 19).replace("T", " "));
 
   try {
