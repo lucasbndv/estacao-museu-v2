@@ -1,4 +1,5 @@
 const express = require("express");
+const pg = require("pg");
 const { Client } = require("pg");
 const client = new Client({
   connectionString:
@@ -8,9 +9,14 @@ const client = new Client({
   },
 });
 client.connect();
+pg.types.setTypeParser(1114, (str) => str); // forcing timestamp to be str
 
 const router = express.Router();
 
+router.get("/test", (req, res) => {
+  res.send("fodase");
+  return;
+});
 router.get("/api", async (req, res) => {
   //  date_to , date_from
   //  GET /something?date_to=DATE&date_from=DATE&scale=compare/days/months/years
@@ -18,12 +24,16 @@ router.get("/api", async (req, res) => {
   let date_from = req.query.date_from;
   let scale = req.query.scale;
 
-  if (!date_to || !date_from || !scale){
-    try{
-      const resp = await client.query("SELECT * FROM estacao ORDER BY datetime DESC LIMIT 1");
-      res.send(resp.rows[0]);
+  if (!date_to || !date_from || !scale) {
+    try {
+      const resp = await client.query(
+        "SELECT * FROM estacao ORDER BY datetime DESC LIMIT 1"
+      );
+      console.log(resp.rows[0]);
+      console.log(resp.rows[0].datetime);
+      res.send(JSON.stringify(resp.rows[0]));
       return;
-    }catch(err){
+    } catch (err) {
       console.log("Error: ", err.stacks);
       res.send("Error on getting data");
       return;
@@ -31,7 +41,11 @@ router.get("/api", async (req, res) => {
   }
 
   try {
-    const resp = await client.query("SELECT * FROM estacao");
+    //SELECT * FROM estacao WHERE datetime BETWEEN '2021-03-11 00:00:00' AND '2021-03-12 23:59:59'
+    const resp = await client.query(
+      "SELECT * FROM estacao WHERE datetime BETWEEN '$1' AND '$2'",
+      [date_to, date_from]
+    );
     console.log(resp);
     res.send(resp.rows);
     client.end();
@@ -60,21 +74,20 @@ router.post("/api", async (req, res) => {
     return;
   }
 
-  let db_querry_values = Object.values(data);
-  //db_querry.push(date.toISOString().slice(0, 19).replace("T", " "));
+  let db_query_values = Object.values(data);
+  //db_query.push(date.toISOString().slice(0, 19).replace("T", " "));
 
   try {
     const resp = await client.query(
       "INSERT INTO estacao (datetime,temperature,pressure,humidity,luminosity,dust10,dust25,dust100) VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
-      db_querry_values
+      db_query_values
     );
-
-    res.send(resp.rows[0]);
     console.log("enviado para o db");
-    return;
+    req.io.emit("update_data", data);
+    return res.send(resp.rows[0]);
   } catch (err) {
     console.log("error");
-
+    console.log(err.stack);
     return res.send(err.stack);
   }
 });

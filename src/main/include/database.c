@@ -53,13 +53,13 @@ void database_setup()
   }
 
   //RTC
-  // if (!rtc.begin())
-  // {
-  //   Serial.println("[DB] Couldn't find RTC");
-  //   digitalWrite(PIN_ERROR, LOW);
-  //   blink_pin(PIN_ERROR, 2);
-  //   ESP.restart();
-  // }
+  if (!rtc.begin())
+  {
+    Serial.println("[DB] Couldn't find RTC");
+    digitalWrite(PIN_ERROR, LOW);
+    blink_pin(PIN_ERROR, 2);
+    ESP.restart();
+  }
 
   // We won't be adjusting time on main sketch anymore,
   // RTC time will be ajusted on test phase.
@@ -76,16 +76,16 @@ void database_setup()
   }
 
   //LDR
-  //pinMode(PIN_LDR, INPUT);
+  pinMode(PIN_LDR, INPUT);
 
   //SenseAir S8
   // (no config)
 
   //ZH06
-  // HSerial.begin(9600, SERIAL_8N1, 16, 17);
-  // ZH06.begin(&HSerial);
+  HSerial.begin(9600, SERIAL_8N1, 16, 17);
+  ZH06.begin(&HSerial);
 
-  db.open("/sd/data/estacao20.db");
+  db.open("/sd/data/estacao21.db");
 
   JSONVar data;
 
@@ -103,63 +103,64 @@ void database_setup()
   data["dust100"] = "FLOAT"; /* teste */
 
   db.create_table("sensordata", &data);
+  Serial.println("oi");
 }
 
 int database_save_data()
 {
   JSONVar data;
 
-  // DateTime now = rtc.now();
-  // char datetime[64] = "%04d-%02d-%02d %02d:%02d:%02d";
-  // snprintf(datetime, sizeof(datetime), datetime,
-  //          now.year(),
-  //          now.month(),
-  //          now.day(),
-  //          now.hour(),
-  //          now.minute(),
-  //          now.second());
+  DateTime now = rtc.now();
+  char datetime[64] = "%04d-%02d-%02d %02d:%02d:%02d";
+  snprintf(datetime, sizeof(datetime), datetime,
+           now.year(),
+           now.month(),
+           now.day(),
+           now.hour(),
+           now.minute(),
+           now.second());
 
-  // uint8_t err = ZH06.update();
+  uint8_t err = ZH06.update();
 
-  // if (err)
-  // {
-  //   blink_pin(PIN_ERROR, 4);
-  //   Serial.println("ZH06 failed");
-  // }
+  if (err)
+  {
+    blink_pin(PIN_ERROR, 4);
+    Serial.println("ZH06 failed");
+  }
 
-  //data["datetime"] = datetime;
+  data["datetime"] = datetime;
   data["temperature"] = bme.readTemperature();    /* °C */
   data["pressure"] = bme.readPressure() / 100.0F; /* hPa */
   data["humidity"] = bme.readHumidity();          /* % */
-  //data["luminosity"] = analogRead(PIN_LDR);
-  data["luminosity"] = 300; //TESTE
-  //data["CO2"] = S8.getCO2('p');
+  data["luminosity"] = analogRead(PIN_LDR);
+  //data["luminosity"] = 300; //TESTE
+  data["CO2"] = S8.getCO2('p');
   //data["PM1.0"] = ZH06.getPM1dot0();
-  data["dust10"] = 1; //TESTE
+  data["dust10"] = ZH06.getPM1dot0(); //TESTE
   //data["PM2.5"] = ZH06.getPM2dot5();
-  data["dust25"] = 2.5; //TESTE
+  data["dust25"] = ZH06.getPM2dot5(); //TESTE
   //data["PM10"] = ZH06.getPM10();
-  data["dust100"] = 10; //TESTE
+  data["dust100"] = ZH06.getPM10(); //TESTE
 
   Serial.println("[INSERT]");
   Serial.println(data);
   db.insert("sensordata", &data);
 
   // checking program answer
-  bool loop = true;
-  String ans = "";
-  int timer = millis();
-  while (loop)
-  {
-    while (Serial.available())
-    {
-      ans += Serial.read();
-    }
+  // bool loop = true;
+  // String ans = "";
+  // int timer = millis();
+  // while (loop)
+  // {
+  //   while (Serial.available())
+  //   {
+  //     ans += Serial.read();
+  //   }
 
-    if (millis() - timer > 1000)
-    {
-      loop = false;
-    }
-  }
+  //   if (millis() - timer > 1000)
+  //   {
+  //     loop = false;
+  //   }
+  // }
   //db.sendBackup();
 }

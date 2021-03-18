@@ -9,7 +9,8 @@ let parser = s.pipe(new Readline({ delimiter: "\n" }));
 let aux = false;
 let current_id = fs.readFileSync("current_id.txt", "utf8").toString();
 let data_types = [
-  "string",
+  "string", //datetime
+  //"number", //id
   "number",
   "number",
   "number",
@@ -28,6 +29,7 @@ parser.on("data", async (data) => {
 
     if (aux) {
       let data_parsed = JSON.parse(data);
+      console.log("data");
 
       // check data
       let new_data = Object.values(data_parsed);
@@ -46,13 +48,13 @@ parser.on("data", async (data) => {
 
       // Checking if there is need for backup
 
-      if (data_parsed.id - current_id > 1) {
-        parser.write(current_id);
-        console.log("Requesting backup...");
-        return;
-      } else {
-        fs.writeFileSync("current_id.txt", data_parsed.id);
-      }
+      // if (data_parsed.id - current_id > 1) {
+      //   parser.write(current_id);
+      //   console.log("Requesting backup...");
+      //   return;
+      // } else {
+      //   fs.writeFileSync("current_id.txt", data_parsed.id);
+      // }
       // 2 times parseFloat in order to get float back
 
       data_parsed.temperature = parseFloat(
@@ -77,14 +79,10 @@ parser.on("data", async (data) => {
         parseFloat(data_parsed.dust100).toFixed(2)
       );
 
-      let sensor_data = {
-        datetime: date,
-        ...data_parsed,
-      };
-
+      delete data_parsed.CO2;
       let resp = await fetch("http://localhost:3000/api", {
         method: "POST",
-        body: JSON.stringify(sensor_data),
+        body: JSON.stringify(data_parsed),
         headers: { "Content-Type": "application/json" },
       });
       console.log("Enviado para o servidor");
