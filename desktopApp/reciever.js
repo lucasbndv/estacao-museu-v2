@@ -9,16 +9,19 @@ let parser = s.pipe(new Readline({ delimiter: "\n" }));
 let aux = false;
 let current_id = fs.readFileSync("current_id.txt", "utf8").toString();
 let data_types = [
+  "string", //device
   "string", //datetime
-  //"number", //id
-  "number",
-  "number",
-  "number",
-  "number",
-  "number",
-  "number",
-  "number",
-  "number",
+  "number", //temperature
+  "number", //humidity
+  "number", //dewPoint
+  "number", //absoluteHumidity
+  "number", //pressure
+  "number", //luminosity
+  "number", //CO2
+  "number", //dust10
+  "number", //dust25
+  "number", //dust100
+  "number", //dataId
 ];
 parser.on("data", async (data) => {
   try {
@@ -29,7 +32,7 @@ parser.on("data", async (data) => {
 
     if (aux) {
       let data_parsed = JSON.parse(data);
-      console.log("data");
+      console.log(data);
 
       // check data
       let new_data = Object.values(data_parsed);
@@ -55,31 +58,18 @@ parser.on("data", async (data) => {
       // } else {
       //   fs.writeFileSync("current_id.txt", data_parsed.id);
       // }
-      // 2 times parseFloat in order to get float back
 
-      data_parsed.temperature = parseFloat(
-        parseFloat(data_parsed.temperature).toFixed(2)
-      );
-      data_parsed.pressure = parseFloat(
-        parseFloat(data_parsed.pressure).toFixed(2)
-      );
-      data_parsed.humidity = parseFloat(
-        parseFloat(data_parsed.humidity).toFixed(2)
-      );
-      data_parsed.luminosity = parseFloat(
-        parseFloat(data_parsed.luminosity).toFixed(2)
-      );
-      data_parsed.dust10 = parseFloat(
-        parseFloat(data_parsed.dust10).toFixed(2)
-      );
-      data_parsed.dust25 = parseFloat(
-        parseFloat(data_parsed.dust25).toFixed(2)
-      );
-      data_parsed.dust100 = parseFloat(
-        parseFloat(data_parsed.dust100).toFixed(2)
-      );
+      // Rounding
+      for (key in data_parsed) {
+        if (key != "datetime" && key != "device") {
+          if (key == "humidity") {
+            data_parsed[key] = parseFloat(data_parsed[key].toFixed(0));
+          } else {
+            data_parsed[key] = parseFloat(data_parsed[key].toFixed(1));
+          }
+        }
+      }
 
-      delete data_parsed.CO2;
       let resp = await fetch("http://localhost:3000/api", {
         method: "POST",
         body: JSON.stringify(data_parsed),

@@ -13,6 +13,7 @@
 RTC_DS3231 rtc;
 
 #define SEALEVELPRESSURE_HPA (1013.25)
+#define DEVICE "museu1"
 Adafruit_BME280 bme;
 
 #define PIN_LDR 34
@@ -85,16 +86,19 @@ void database_setup()
   HSerial.begin(9600, SERIAL_8N1, 16, 17);
   ZH06.begin(&HSerial);
 
-  db.open("/sd/data/estacao21.db");
+  db.open("/sd/data/estacao30.db");
 
   JSONVar data;
-
-  data["datetime"] = "DATETIME"; /* RTC */
-  data["temperature"] = "FLOAT"; /* BME280 */
-  data["pressure"] = "FLOAT";    /* BME280 */
-  data["humidity"] = "FLOAT";    /* BME280 */
-  data["luminosity"] = "FLOAT";  /* LDR */
-  data["CO2"] = "FLOAT";         /* SenseAir S8 */
+  data["device"] = "VARCHAR(255)";                  /* Device id */
+  data["id"] = "INTEGER PRIMARY KEY AUTOINCREMENT"; /* Data id */
+  data["datetime"] = "DATETIME";                    /* RTC */
+  data["temperature"] = "FLOAT";                    /* BME280 */
+  data["humidity"] = "FLOAT";                       /* BME280 */
+  data["dewPoint"] = "FLOAT";                       /* Calc */
+  data["absoluteHumidity"] = "FLOAT";               /* Calc */
+  data["pressure"] = "FLOAT";                       /* BME280 */
+  data["luminosity"] = "FLOAT";                     /* LDR */
+  data["CO2"] = "FLOAT";                            /* SenseAir S8 */
   //data["PM1.0"] = "FLOAT";        /* WinsenZE06 */
   //data["PM2.5"] = "FLOAT";        /* WinsenZE06 */
   //data["PM10"] = "FLOAT";       /* WinsenZE06 */
@@ -103,7 +107,6 @@ void database_setup()
   data["dust100"] = "FLOAT"; /* teste */
 
   db.create_table("sensordata", &data);
-  Serial.println("oi");
 }
 
 int database_save_data()
@@ -128,10 +131,15 @@ int database_save_data()
     Serial.println("ZH06 failed");
   }
 
+  float temp = bme.readTemperature();
+  float humi = bme.readHumidity();
+  data["device"] = DEVICE;
   data["datetime"] = datetime;
-  data["temperature"] = bme.readTemperature();    /* °C */
-  data["pressure"] = bme.readPressure() / 100.0F; /* hPa */
-  data["humidity"] = bme.readHumidity();          /* % */
+  data["temperature"] = temp;                                                                                    /* °C */
+  data["humidity"] = humi;                                                                                       /* % */
+  data["dewPoint"] = pow((humi / 100), (1.0 / 8.0)) * (112 + 0.9 * temp) + (0.1 * temp - 112);                   /* °C */
+  data["absoluteHumidity"] = (pow(2.71828, (temp * 17.67) / (temp + 243.5)) * humi * 13.2471) / (273.15 + temp); /* g/m3 */
+  data["pressure"] = bme.readPressure() / 100.0F;                                                                /* hPa */
   data["luminosity"] = analogRead(PIN_LDR);
   //data["luminosity"] = 300; //TESTE
   data["CO2"] = S8.getCO2('p');
@@ -142,9 +150,13 @@ int database_save_data()
   //data["PM10"] = ZH06.getPM10();
   data["dust100"] = ZH06.getPM10(); //TESTE
 
+  db.insert("sensordata", &data);
+  JSONVar ans = db.query("SELECT id FROM sensordata ORDER BY id DESC LIMIT 1")[0];
+  int id = atol((const char *)ans["id"]);
+  data["dataId"] = id;
+  //data["dataId"] = ans["id"].toInt();
   Serial.println("[INSERT]");
   Serial.println(data);
-  db.insert("sensordata", &data);
 
   // checking program answer
   // bool loop = true;

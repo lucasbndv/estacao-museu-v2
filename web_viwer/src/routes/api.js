@@ -29,8 +29,6 @@ router.get("/api", async (req, res) => {
       const resp = await client.query(
         "SELECT * FROM estacao ORDER BY datetime DESC LIMIT 1"
       );
-      console.log(resp.rows[0]);
-      console.log(resp.rows[0].datetime);
       res.send(JSON.stringify(resp.rows[0]));
       return;
     } catch (err) {
@@ -60,14 +58,19 @@ router.get("/api", async (req, res) => {
 router.post("/api", async (req, res) => {
   let data = req.body;
   if (
+    !data.device ||
     !data.datetime ||
     !data.temperature ||
     !data.humidity ||
+    !data.dewPoint ||
+    !data.absoluteHumidity ||
     !data.pressure ||
     !data.luminosity ||
+    !data.CO2 ||
     !data.dust10 ||
     !data.dust25 ||
-    !data.dust100
+    !data.dust100 ||
+    !data.dataId
   ) {
     res.send("ERROR ON BODY");
     console.log("Error on body");
@@ -75,11 +78,10 @@ router.post("/api", async (req, res) => {
   }
 
   let db_query_values = Object.values(data);
-  //db_query.push(date.toISOString().slice(0, 19).replace("T", " "));
 
   try {
     const resp = await client.query(
-      "INSERT INTO estacao (datetime,temperature,pressure,humidity,luminosity,dust10,dust25,dust100) VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
+      "INSERT INTO estacao (device,datetime,temperature,humidity,dewpoint,absolutehumidity,pressure,luminosity,co2,dust10,dust25,dust100,dataid) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)",
       db_query_values
     );
     console.log("enviado para o db");
