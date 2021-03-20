@@ -39,11 +39,11 @@ let cards = [
 
 let init = async () => {
   createCards();
-  // let resp = await fetch("http://localhost:3000/api", {
-  //   method: "GET",
-  // });
-  // let data = await resp.json();
-  // updateData(data);
+  let resp = await fetch(process.env.API_URL, {
+    method: "GET",
+  });
+  let data = await resp.json();
+  updateData(data);
 };
 
 socket.on("update_data", (income) => {
