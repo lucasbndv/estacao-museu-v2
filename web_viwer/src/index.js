@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const server = require("http").Server(app);
@@ -14,7 +15,7 @@ app.use(bodyParser.json());
 app.use(apiRoutes);
 app.use(express.static("webpage"));
 
-server.listen(3000, () => {
+server.listen(process.env.PORT, () => {
   console.log(`Listening on port: ${server.address().port} ... `);
 });
 

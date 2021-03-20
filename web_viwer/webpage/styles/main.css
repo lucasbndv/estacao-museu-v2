@@ -78,5 +78,9 @@ header {
 }
 
 .card_texts p {
-  font-size: 30px;
+  font-size: 28px;
+}
+
+.card_texts h3 {
+  font-size: large;
 }
