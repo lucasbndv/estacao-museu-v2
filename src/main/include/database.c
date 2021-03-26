@@ -158,21 +158,17 @@ int database_save_data()
   Serial.println("[INSERT]");
   Serial.println(data);
 
-  // checking program answer
-  // bool loop = true;
-  // String ans = "";
-  // int timer = millis();
-  // while (loop)
-  // {
-  //   while (Serial.available())
-  //   {
-  //     ans += Serial.read();
-  //   }
+  int wait_response = millis();
+  long int response = 0;
+  while (!Serial.available() && millis() - wait_response < 1000)
+  {
+    Serial.println("Starting backup...");
+    response = Serial.parseInt();
+  }
 
-  //   if (millis() - timer > 1000)
-  //   {
-  //     loop = false;
-  //   }
-  // }
-  //db.sendBackup();
+  if (response)
+  {
+    db.sendBackup(response);
+    Serial.println("DB REQUESTED");
+  }
 }

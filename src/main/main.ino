@@ -20,6 +20,7 @@ void setup()
   analogSetClockDiv(8);
 
   database_setup();
+  
   database_save_data();
 
   //webserver_setup();

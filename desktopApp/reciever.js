@@ -3,10 +3,25 @@ const Readline = require("@serialport/parser-readline");
 const fetch = require("node-fetch");
 const fs = require("fs");
 
-const s = new SerialPort("COM4", { baudRate: 115200 });
-let parser = s.pipe(new Readline({ delimiter: "\n" }));
+const port = new SerialPort("COM4", { baudRate: 115200 });
 
-let aux = false;
+// let test = false;
+// setInterval(() => {
+//   test = !test;
+//   console.log("Sending data: ", test);
+//   port.write("100000 \n");
+// }, 1000);
+
+let parser = port.pipe(new Readline({ delimiter: "\n" }));
+// list serial ports:
+// let serialport = require('serialport');
+// serialport.list(function (err, ports) {
+//   ports.forEach(function(port) {
+//     console.log(port.comName);
+//   });
+// });
+let insert = false;
+let backup_id = 0;
 let current_id = fs.readFileSync("current_id.txt", "utf8").toString();
 let data_types = [
   "string", //device
@@ -23,17 +38,17 @@ let data_types = [
   "number", //dust100
   "number", //dataId
 ];
+
 parser.on("data", async (data) => {
   try {
     if (data[0] == "[" && data[1] == "I") {
-      aux = true;
+      insert = true;
       return;
     }
 
-    if (aux) {
+    if (insert) {
       let data_parsed = JSON.parse(data);
       console.log(data);
-
       // check data
       let new_data = Object.values(data_parsed);
 
@@ -49,15 +64,23 @@ parser.on("data", async (data) => {
         }
       }
 
-      // Checking if there is need for backup
+      // Verifying if backup is over:
+      if (data_parsed.dataId == backup_id) {
+        backup_id = 0;
+      }
 
-      // if (data_parsed.id - current_id > 1) {
-      //   parser.write(current_id);
-      //   console.log("Requesting backup...");
-      //   return;
-      // } else {
-      //   fs.writeFileSync("current_id.txt", data_parsed.id);
-      // }
+      if (data_parsed.dataId - current_id > 1) {
+        // Not request multiple times
+        if (backup_id == 0 || data_parsed.dataId != backup_id) {
+          port.write(current_id.toString() + " \n");
+          backup_id = data_parsed.dataId;
+          console.log("Requesting backup...");
+        }
+        return;
+      } else {
+        fs.writeFileSync("current_id.txt", data_parsed.dataId);
+        current_id = data_parsed.dataId;
+      }
 
       // Rounding
       for (key in data_parsed) {
@@ -70,13 +93,13 @@ parser.on("data", async (data) => {
         }
       }
 
-      let resp = await fetch("http://localhost:3000/api", {
+      let resp = await fetch("https://estacao-museu.herokuapp.com/api", {
         method: "POST",
         body: JSON.stringify(data_parsed),
         headers: { "Content-Type": "application/json" },
       });
-      console.log("Enviado para o servidor");
-      aux = false;
+      console.log("Data was Sent: ", data_parsed.datetime);
+      insert = false;
     }
 
     return;
