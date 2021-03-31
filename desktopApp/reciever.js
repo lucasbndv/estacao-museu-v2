@@ -3,23 +3,33 @@ const Readline = require("@serialport/parser-readline");
 const fetch = require("node-fetch");
 const fs = require("fs");
 
-const port = new SerialPort("COM4", { baudRate: 115200 });
+let readline = require("readline");
+let reader = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-// let test = false;
-// setInterval(() => {
-//   test = !test;
-//   console.log("Sending data: ", test);
-//   port.write("100000 \n");
-// }, 1000);
+let ports_arr = [];
+SerialPort.list().then(
+  (ports) =>
+    ports.forEach((port, index) => {
+      ports_arr.push(port.path);
+      console.log(port.path + " => " + index);
+    }),
+  (err) => console.error(err)
+);
 
-let parser = port.pipe(new Readline({ delimiter: "\n" }));
-// list serial ports:
-// let serialport = require('serialport');
-// serialport.list(function (err, ports) {
-//   ports.forEach(function(port) {
-//     console.log(port.comName);
-//   });
-// });
+reader.question(
+  "Qual é o número da porta que você deseja utilizar? \n",
+  function (ans) {
+    const port = new SerialPort(ports_arr[ans], { baudRate: 9600 });
+    let parser = port.pipe(new Readline({ delimiter: "\n" }));
+    console.log("Conectado a porta " + ports_arr[ans]);
+    parser.on("data", handleData);
+    reader.close();
+  }
+);
+
 let insert = false;
 let backup_id = 0;
 let current_id = fs.readFileSync("current_id.txt", "utf8").toString();
@@ -39,7 +49,7 @@ let data_types = [
   "number", //dataId
 ];
 
-parser.on("data", async (data) => {
+const handleData = async (data) => {
   try {
     if (data[0] == "[" && data[1] == "I") {
       insert = true;
@@ -106,4 +116,4 @@ parser.on("data", async (data) => {
   } catch (e) {
     //console.log("ERROR: ", e);
   }
-});
+};
