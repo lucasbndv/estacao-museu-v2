@@ -19,10 +19,11 @@ SerialPort.list().then(
   (err) => console.error(err)
 );
 
+var port;
 reader.question(
   "Qual é o número da porta que você deseja utilizar? \n",
   function (ans) {
-    const port = new SerialPort(ports_arr[ans], { baudRate: 9600 });
+    port = new SerialPort(ports_arr[ans], { baudRate: 9600 });
     let parser = port.pipe(new Readline({ delimiter: "\n" }));
     console.log("Conectado a porta " + ports_arr[ans]);
     parser.on("data", handleData);
@@ -32,7 +33,13 @@ reader.question(
 
 let insert = false;
 let backup_id = 0;
-let current_id = fs.readFileSync("current_id.txt", "utf8").toString();
+let current_id;
+try {
+  current_id = fs.readFileSync("current_id.txt", "utf8").toString();
+} catch {
+  current_id = 0;
+  fs.writeFileSync("current_id.txt", "0");
+}
 let data_types = [
   "string", //device
   "string", //datetime
@@ -58,7 +65,8 @@ const handleData = async (data) => {
 
     if (insert) {
       let data_parsed = JSON.parse(data);
-      console.log(data);
+      console.log(data_parsed);
+
       // check data
       let new_data = Object.values(data_parsed);
 
@@ -79,18 +87,25 @@ const handleData = async (data) => {
         backup_id = 0;
       }
 
-      if (data_parsed.dataId - current_id > 1) {
-        // Not request multiple times
-        if (backup_id == 0 || data_parsed.dataId != backup_id) {
-          port.write(current_id.toString() + " \n");
-          backup_id = data_parsed.dataId;
-          console.log("Requesting backup...");
-        }
-        return;
-      } else {
-        fs.writeFileSync("current_id.txt", data_parsed.dataId);
-        current_id = data_parsed.dataId;
+      if (data_parsed.dataId < current_id) {
+        console.log("Error");
       }
+
+      // if (data_parsed.dataId - current_id > 1) {
+      //   // Not request multiple times
+      //   if (backup_id == 0 || data_parsed.dataId != backup_id) {
+      //     port.write(current_id.toString() + " \n");
+      //     backup_id = data_parsed.dataId;
+      //     console.log("Requesting backup...");
+      //   }
+      //   return;
+      // } else {
+      //   fs.writeFileSync("current_id.txt", data_parsed.dataId);
+      //   console.log("No backup");
+      //   current_id = data_parsed.dataId;
+      // }
+
+      fs.writeFileSync("current_id.txt", data_parsed.dataId);
 
       // Rounding
       for (key in data_parsed) {

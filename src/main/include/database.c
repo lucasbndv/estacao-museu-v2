@@ -86,7 +86,7 @@ void database_setup()
   HSerial.begin(9600, SERIAL_8N1, 16, 17);
   ZH06.begin(&HSerial);
 
-  db.open("/sd/data/estacao30.db");
+  db.open("/sd/data/estacaomuseu.db");
 
   JSONVar data;
   data["device"] = "VARCHAR(255)";                  /* Device id */
@@ -160,10 +160,14 @@ int database_save_data()
 
   int wait_response = millis();
   long int response = 0;
-  while (!Serial.available() && millis() - wait_response < 1000)
+  while (millis() - wait_response < 2000)
   {
-    Serial.println("Starting backup...");
-    response = Serial.parseInt();
+    if (Serial.available())
+    {
+      Serial.println("Starting backup...");
+      response = Serial.parseInt();
+      break;
+    }
   }
 
   if (response)

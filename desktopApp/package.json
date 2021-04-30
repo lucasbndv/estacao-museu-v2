@@ -1,0 +1,25 @@
+{
+  "name": "receptor-cefet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "reciever.js",
+  "bin": "reciever.js",
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "pkg": "^4.5.1",
+    "serialport": "^9.0.7"
+  },
+
+  "devDependencies": {
+    "nexe": "^4.0.0-beta.18"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+
+  "pkg":{
+    "assets":"/node_modules/**/*"
+  },
+  "author": "",
+  "license": "ISC"
+}

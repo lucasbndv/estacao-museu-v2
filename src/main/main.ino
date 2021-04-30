@@ -4,7 +4,7 @@
 
 // Time from reset to 'database_save_data()' is aprox. 750ms
 //
-#define TIME_TO_SLEEP 9250000 /* Time ESP32 will go to sleep (in us) */
+#define TIME_TO_SLEEP 59250000//9250000 /* Time ESP32 will go to sleep (in us) */
 
 void setup()
 {
