@@ -18,7 +18,8 @@
   },
 
   "pkg":{
-    "assets":"/node_modules/**/*"
+    "assets":"/node_modules/**/*",
+    "targets": ["win-x64","win-x86"]
   },
   "author": "",
   "license": "ISC"

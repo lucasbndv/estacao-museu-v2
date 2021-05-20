@@ -13,7 +13,7 @@
 RTC_DS3231 rtc;
 
 #define SEALEVELPRESSURE_HPA (1013.25)
-#define DEVICE "museu1"
+#define DEVICE "museu2"
 Adafruit_BME280 bme;
 
 #define PIN_LDR 34
@@ -54,13 +54,13 @@ void database_setup()
   }
 
   //RTC
-  if (!rtc.begin())
-  {
-    Serial.println("[DB] Couldn't find RTC");
-    digitalWrite(PIN_ERROR, LOW);
-    blink_pin(PIN_ERROR, 2);
-    ESP.restart();
-  }
+  // if (!rtc.begin())
+  // {
+  //   Serial.println("[DB] Couldn't find RTC");
+  //   digitalWrite(PIN_ERROR, LOW);
+  //   blink_pin(PIN_ERROR, 2);
+  //   ESP.restart();
+  // }
 
   // We won't be adjusting time on main sketch anymore,
   // RTC time will be ajusted on test phase.
@@ -77,14 +77,14 @@ void database_setup()
   }
 
   //LDR
-  pinMode(PIN_LDR, INPUT);
+  //pinMode(PIN_LDR, INPUT);
 
   //SenseAir S8
   // (no config)
 
   //ZH06
-  HSerial.begin(9600, SERIAL_8N1, 16, 17);
-  ZH06.begin(&HSerial);
+  // HSerial.begin(9600, SERIAL_8N1, 16, 17);
+  // ZH06.begin(&HSerial);
 
   db.open("/sd/data/estacaomuseu.db");
 
@@ -99,12 +99,9 @@ void database_setup()
   data["pressure"] = "FLOAT";                       /* BME280 */
   data["luminosity"] = "FLOAT";                     /* LDR */
   data["co2"] = "FLOAT";                            /* SenseAir S8 */
-  //data["PM1.0"] = "FLOAT";        /* WinsenZE06 */
-  //data["PM2.5"] = "FLOAT";        /* WinsenZE06 */
-  //data["PM10"] = "FLOAT";       /* WinsenZE06 */
-  data["dust10"] = "FLOAT";  /* teste */
-  data["dust25"] = "FLOAT";  /* teste */
-  data["dust100"] = "FLOAT"; /* teste */
+  data["dust10"] = "FLOAT";                         /* WinsenZE06 */
+  data["dust25"] = "FLOAT";                         /* WinsenZE06 */
+  data["dust100"] = "FLOAT";                        /* WinsenZE06 */
 
   db.create_table("sensordata", &data);
 }
@@ -113,42 +110,42 @@ int database_save_data()
 {
   JSONVar data;
 
-  DateTime now = rtc.now();
-  char datetime[64] = "%04d-%02d-%02d %02d:%02d:%02d";
-  snprintf(datetime, sizeof(datetime), datetime,
-           now.year(),
-           now.month(),
-           now.day(),
-           now.hour(),
-           now.minute(),
-           now.second());
+  // DateTime now = rtc.now();
+  // char datetime[64] = "%04d-%02d-%02d %02d:%02d:%02d";
+  // snprintf(datetime, sizeof(datetime), datetime,
+  //          now.year(),
+  //          now.month(),
+  //          now.day(),
+  //          now.hour(),
+  //          now.minute(),
+  //          now.second());
 
-  uint8_t err = ZH06.update();
+  // uint8_t err = ZH06.update();
 
-  if (err)
-  {
-    blink_pin(PIN_ERROR, 4);
-    Serial.println("ZH06 failed");
-  }
+  // if (err)
+  // {
+  //   blink_pin(PIN_ERROR, 4);
+  //   Serial.println("ZH06 failed");
+  // }
 
   float temp = bme.readTemperature();
   float humi = bme.readHumidity();
   data["device"] = DEVICE;
-  data["datetime"] = datetime;
+  data["datetime"] = "2020-05-17 16:00:00";                                                                      //datetime;
   data["temperature"] = temp;                                                                                    /* °C */
   data["humidity"] = humi;                                                                                       /* % */
   data["dewpoint"] = pow((humi / 100), (1.0 / 8.0)) * (112 + 0.9 * temp) + (0.1 * temp - 112);                   /* °C */
   data["absolutehumidity"] = (pow(2.71828, (temp * 17.67) / (temp + 243.5)) * humi * 13.2471) / (273.15 + temp); /* g/m3 */
   data["pressure"] = bme.readPressure() / 100.0F;                                                                /* hPa */
-  data["luminosity"] = analogRead(PIN_LDR);
+  //data["luminosity"] = analogRead(PIN_LDR);
   //data["luminosity"] = 300; //TESTE
-  data["co2"] = S8.getCO2('p');
+  //data["co2"] = S8.getCO2('p');
   //data["PM1.0"] = ZH06.getPM1dot0();
-  data["dust10"] = ZH06.getPM1dot0(); //TESTE
+  //data["dust10"] = ZH06.getPM1dot0(); //TESTE
   //data["PM2.5"] = ZH06.getPM2dot5();
-  data["dust25"] = ZH06.getPM2dot5(); //TESTE
+  //data["dust25"] = ZH06.getPM2dot5(); //TESTE
   //data["PM10"] = ZH06.getPM10();
-  data["dust100"] = ZH06.getPM10(); //TESTE
+  //data["dust100"] = ZH06.getPM10(); //TESTE
 
   db.insert("sensordata", &data);
   JSONVar ans = db.query("SELECT id FROM sensordata ORDER BY id DESC LIMIT 1")[0];

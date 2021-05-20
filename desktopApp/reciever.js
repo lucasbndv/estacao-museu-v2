@@ -34,6 +34,8 @@ reader.question(
 let insert = false;
 let backup_id = 0;
 let current_id;
+let url = "localhost:3000"; // "localhost"
+//let url = "https://estacao-museu.herokuapp.com/api"; //heroku
 try {
   current_id = fs.readFileSync("current_id.txt", "utf8").toString();
 } catch {
@@ -118,7 +120,7 @@ const handleData = async (data) => {
         }
       }
 
-      let resp = await fetch("https://estacao-museu.herokuapp.com/api", {
+      let resp = await fetch(url, {
         method: "POST",
         body: JSON.stringify(data_parsed),
         headers: { "Content-Type": "application/json" },

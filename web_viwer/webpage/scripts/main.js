@@ -1,4 +1,7 @@
 var socket = io();
+var chart;
+let state = { type: "hourly", date: "", data: {}, loading: false };
+
 let cards = [
   {
     title: "Temperatura(C°)",
@@ -38,12 +41,35 @@ let cards = [
 ];
 
 let init = async () => {
+  let date = new Date().toLocaleDateString();
+  state.date = date.slice(6) + `-${date.slice(3, 5)}-` + date.slice(0, 2);
+
   createCards();
-  let resp = await fetch(process.env.API_URL, {
-    method: "GET",
-  });
-  let data = await resp.json();
-  updateData(data);
+  setupEvents();
+
+  try {
+    let resp = await fetch("http://localhost:3000/api?type=single", {
+      method: "GET",
+    });
+    let data = await resp.json();
+    updateData(data);
+
+    // Chart
+    setLoading(true);
+    resp = await fetch(
+      `http://localhost:3000/api?type=hourly&date_from=${state.date}`,
+      {
+        method: "GET",
+      }
+    );
+    data = await resp.json();
+    state.data = data;
+    loadChart(data);
+    setLoading(false);
+  } catch (e) {
+    console.log(e);
+  }
+  // Fresh update
 };
 
 socket.on("update_data", (income) => {
@@ -52,11 +78,10 @@ socket.on("update_data", (income) => {
   updateData(income);
 });
 
-let updateData = async (data) => {
+let updateData = (data) => {
   let all_data = document.getElementsByClassName("all_data");
   let date = data.datetime.slice(0, 10);
   let time = data.datetime.slice(11);
-  console.log(data);
 
   for (let i = 0; i < all_data.length; i++) {
     if (all_data[i].id == "last_update_date") {
@@ -94,4 +119,230 @@ let createCards = () => {
   container.innerHTML = html;
 };
 
+function loadChart(input) {
+  let datasets = createDatasets(input);
+  // Hourly
+  let times = [];
+  input.datetime.forEach((item) => times.push(item.slice(11)));
+
+  const data = {
+    labels: times,
+    datasets,
+  };
+
+  const config = {
+    type: "line",
+    data,
+    options: {},
+  };
+  var ctx = document.getElementById("myChart");
+  chart = new Chart(ctx, config);
+}
+
+function updateChartByFilter(input, type) {
+  let datasets = createDatasets(input);
+  let times = [];
+  if (type == "hourly") {
+    times = [
+      "01:00",
+      "02:00",
+      "03:00",
+      "04:00",
+      "05:00",
+      "06:00",
+      "07:00",
+      "08:00",
+      "09:00",
+      "10:00",
+      "11:00",
+      "12:00",
+      "13:00",
+      "14:00",
+      "15:00",
+      "16:00",
+      "17:00",
+      "18:00",
+      "19:00",
+      "20:00",
+      "21:00",
+      "22:00",
+      "23:00",
+    ];
+  } else if (type == "daily") {
+    let days_per_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    for (
+      let i = 1;
+      i < days_per_month[parseInt(input.datetime[0].slice(5, 7)) - 1];
+      i++
+    ) {
+      if (i < 10) {
+        times.push(`0${i}`);
+      } else {
+        times.push(i);
+      }
+    }
+  } else if (type == "monthly") {
+    times = [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
+    ];
+  }
+
+  chart.data.datasets = datasets;
+  chart.data.labels = times;
+  chart.update();
+}
+
+function random_rgba() {
+  var o = Math.round,
+    r = Math.random,
+    s = 255;
+  return (
+    "rgba(" +
+    o(r() * s) +
+    "," +
+    o(r() * s) +
+    "," +
+    o(r() * s) +
+    "," +
+    r().toFixed(1) +
+    ")"
+  );
+}
+
+function setLoading(load) {
+  state.loading = load;
+  let loading = document.getElementById("loader");
+  if (load) {
+    loading.style.display = "flex";
+  } else {
+    loading.style.display = "none";
+  }
+}
+
+function createDatasets(data) {
+  let datasets = [];
+  let i = 0;
+  let labels = Object.keys(data);
+  let randomColor;
+  for (prop in data) {
+    randomColor = random_rgba();
+
+    if (prop != "datetime")
+      datasets.push({
+        label: labels[i],
+        backgroundColor: randomColor,
+        borderColor: randomColor,
+        data: data[prop],
+      });
+    i++;
+  }
+  return datasets;
+}
+
+async function fetchWithFilter(type) {
+  setLoading(true);
+  let date = state.date;
+  console.log(date);
+  resp = await fetch(
+    `http://localhost:3000/api?type=${type}&date_from=${date}`,
+    {
+      method: "GET",
+    }
+  );
+  data = await resp.json();
+  state.data = data;
+  updateChartByFilter(data, type);
+  setLoading(false);
+}
+
+function setupEvents() {
+  // Default values
+  let date_input = document.getElementById("date_input");
+  date_input.value = state.date;
+
+  // Filter Buttons
+  let hourly = document.getElementById("hourly");
+  let daily = document.getElementById("daily");
+  let monthly = document.getElementById("monthly");
+
+  hourly.addEventListener("click", async () => {
+    fetchWithFilter("hourly");
+    state.type = "hourly";
+    daily.style.backgroundColor = "rgba(255, 255, 255, 0.781)";
+    hourly.style.backgroundColor = "green";
+    monthly.style.backgroundColor = "rgba(255, 255, 255, 0.781)";
+  });
+  daily.addEventListener("click", async () => {
+    fetchWithFilter("daily");
+    state.type = "daily";
+    daily.style.backgroundColor = "green";
+    hourly.style.backgroundColor = "rgba(255, 255, 255, 0.781)";
+    monthly.style.backgroundColor = "rgba(255, 255, 255, 0.781)";
+  });
+  monthly.addEventListener("click", async () => {
+    fetchWithFilter("monthly");
+    state.type = "monthly";
+    daily.style.backgroundColor = "rgba(255, 255, 255, 0.781)";
+    hourly.style.backgroundColor = "rgba(255, 255, 255, 0.781)";
+    monthly.style.backgroundColor = "green";
+  });
+
+  date_input.addEventListener("change", async () => {
+    state.date = date_input.value;
+    fetchWithFilter(state.type);
+  });
+
+  // Function buttons
+  let download_button = document.getElementById("download");
+
+  download_button.addEventListener("click", () => {
+    if (state.loading) {
+      window.alert(
+        "Os dados ainda estão sendo carregados, por favor aguardar!"
+      );
+      return;
+    }
+    downloadData(state.data);
+  });
+}
+
+function downloadData(input) {
+  // transform to csv
+  let keys = Object.keys(input);
+  let ref = keys[0];
+  keys[0] = `"${keys[0]}`;
+  keys[keys.length - 1] = `${keys[keys.length - 1]}"`;
+  let csv = [keys.join('","') + "\n"];
+  let row = [];
+  for (let i = 0; i < input[ref].length; i++) {
+    for (prop in input) {
+      row.push(`"${input[prop][i]}"`); // create a array of the row
+    }
+
+    csv += row.join(",") + " \n";
+    row = [];
+  }
+
+  // Download part
+  let blob = new Blob([csv], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.setAttribute("hidden", "");
+  a.setAttribute("href", url);
+  a.setAttribute("download", `dados-${state.date}.csv`);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 window.onload = init;
